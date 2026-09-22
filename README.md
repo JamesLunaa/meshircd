@@ -104,7 +104,7 @@ Only capabilities that are actually implemented are advertised.
 Requires **Python 3.11+** (for `tomllib`). Nothing else.
 
 ```bash
-git clone <your-repo-url> meshircd
+git clone https://github.com/JamesLunaa/meshircd.git
 cd meshircd
 pip install .
 

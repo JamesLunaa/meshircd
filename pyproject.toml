@@ -31,7 +31,7 @@ meshircd = "meshircd.cli:main"
 meshircdctl = "meshircd.cli:ctl"
 
 [project.urls]
-Homepage = "https://github.com/example/meshircd"
+Homepage = "https://github.com/JamesLunaa/meshircd"
 
 [tool.setuptools.packages.find]
 where = ["src"]
