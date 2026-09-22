@@ -23,8 +23,13 @@ RUN mkdir -p /etc/meshircd /var/lib/meshircd \
 USER meshircd
 WORKDIR /var/lib/meshircd
 
-ENV IRCD_CONFIG=/etc/meshircd/ircd.toml \
-    IRCD_STORAGE_PATH=/var/lib/meshircd/meshircd.db \
+# IRCD_CONFIG is deliberately NOT set here: it forces find_config_file()
+# down its "must exist" branch, so a container started with no config
+# mounted would fail --check-config instead of falling back to built-in
+# defaults. /etc/meshircd/ircd.toml is already in DEFAULT_CONFIG_PATHS,
+# so mounting a file there (see docker-compose.yml) is picked up the
+# same way without pinning it via the environment.
+ENV IRCD_STORAGE_PATH=/var/lib/meshircd/meshircd.db \
     PYTHONUNBUFFERED=1
 
 EXPOSE 6667 6697

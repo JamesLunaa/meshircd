@@ -76,9 +76,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install the package
+        # systemd-analyze verify checks that ExecStart's binary actually
+        # exists on disk; without this, verifying meshircd.service always
+        # fails because /usr/bin/meshircd was never installed.
+        run: python -m pip install .
       - name: Unit files must parse
         run: |
           sudo cp deploy/*.service deploy/*.path /etc/systemd/system/
+          sudo ln -sf "$(command -v meshircd)" /usr/bin/meshircd
           sudo systemd-analyze verify /etc/systemd/system/meshircd.service
           # A high security score here is the point of the hardening block.
           systemd-analyze security meshircd.service --no-pager || true
