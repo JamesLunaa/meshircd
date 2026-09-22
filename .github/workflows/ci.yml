@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.11 is the floor: tomllib arrived there, and the config loader
+        # depends on it rather than pulling in a TOML dependency.
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Verify there are no runtime dependencies
+        # The project's first rule is standard library only. Install it
+        # into a clean environment and assert nothing came with it.
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+          installed=$(python -m pip list --format=freeze --exclude-editable \
+            | grep -vE '^(meshircd|pip|setuptools|wheel)==' || true)
+          if [ -n "$installed" ]; then
+            echo "unexpected runtime dependencies:"; echo "$installed"; exit 1
+          fi
+          echo "no runtime dependencies"
+
+      - name: Console entry points work
+        run: |
+          meshircd --version
+          meshircd --check-config
+          meshircdctl genconfig > /dev/null
+
+      - name: Run the test suite
+        # Stdlib unittest: the suite needs no test framework installed,
+        # which is the same constraint the server itself is held to.
+        run: python -W error::ResourceWarning -m unittest discover -s tests -p "test_*.py" -v
+
+  config-examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: The shipped example config must actually be valid
+        run: |
+          python -m pip install .
+          sed -i 's|^path = .*|path = "./test.db"|' deploy/ircd.example.toml
+          meshircd --check-config --config deploy/ircd.example.toml
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the image
+        run: docker build -t meshircd:ci .
+      - name: The image starts and validates its config
+        run: |
+          docker run --rm meshircd:ci --version
+          docker run --rm -e IRCD_STORAGE_PATH=/tmp/x.db meshircd:ci --check-config
+
+  systemd-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unit files must parse
+        run: |
+          sudo cp deploy/*.service deploy/*.path /etc/systemd/system/
+          sudo systemd-analyze verify /etc/systemd/system/meshircd.service
+          # A high security score here is the point of the hardening block.
+          systemd-analyze security meshircd.service --no-pager || true
