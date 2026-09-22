@@ -6,6 +6,9 @@ venv/
 env/
 *.egg-info/
 
+# IDE
+.idea/
+
 # Secrets
 .env
 
