@@ -1,0 +1,92 @@
+# systemd unit for meshircd.
+#
+#   sudo cp deploy/meshircd.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now meshircd
+#
+# Certificate renewal does not need a restart -- see meshircd-reload.path,
+# or run `systemctl reload meshircd` after your ACME client renews.
+
+[Unit]
+Description=meshircd IRC daemon
+Documentation=https://github.com/example/meshircd
+After=network-online.target
+Wants=network-online.target
+# Uncomment when binding to a tailnet address: the interface must exist
+# before the server tries to bind to it.
+# After=tailscaled.service
+# Requires=tailscaled.service
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/meshircd --config /etc/meshircd/ircd.toml
+# SIGHUP re-reads the MOTD and reloads the TLS certificate in place, so a
+# renewed certificate is picked up without dropping a single client.
+ExecReload=/bin/kill -HUP $MAINPID
+# SIGTERM is handled: listeners close, every client is sent a real ERROR
+# line explaining why, and channel state is flushed to the database.
+KillSignal=SIGTERM
+TimeoutStopSec=20
+Restart=on-failure
+RestartSec=5s
+
+# --- identity ----------------------------------------------------------
+# DynamicUser gives the service a transient UID that exists only while it
+# runs, so there is no long-lived account to compromise and no files left
+# owned by a stale user.
+DynamicUser=yes
+StateDirectory=meshircd
+StateDirectoryMode=0700
+ConfigurationDirectory=meshircd
+LogsDirectory=meshircd
+
+# --- filesystem ---------------------------------------------------------
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ReadWritePaths=/var/lib/meshircd
+# Grant read access to your certificates. With certbot, this is usually:
+# ReadOnlyPaths=/etc/letsencrypt
+# and the service also needs to be in a group that can read privkey.pem.
+# SupplementaryGroups=cert-readers
+
+# --- privileges ----------------------------------------------------------
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+# Ports below 1024 need CAP_NET_BIND_SERVICE. IRC's ports (6667/6697) are
+# above 1024, so the default of no capabilities at all is correct.
+# AmbientCapabilities=CAP_NET_BIND_SERVICE
+# CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+PrivateUsers=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RemoveIPC=yes
+UMask=0077
+
+# --- syscalls and networking ---------------------------------------------
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources @obsolete @mount @debug @swap
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+# --- resources ------------------------------------------------------------
+# One file descriptor per connection plus overhead; keep this comfortably
+# above limits.max_connections.
+LimitNOFILE=8192
+TasksMax=64
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target

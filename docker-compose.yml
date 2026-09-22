@@ -1,0 +1,31 @@
+services:
+  meshircd:
+    build: .
+    image: meshircd:latest
+    restart: unless-stopped
+    # Published on loopback only. Change to "6667:6667" to expose it, and
+    # read the Security section of the README before you do.
+    ports:
+      - "127.0.0.1:6667:6667"
+      - "127.0.0.1:6697:6697"
+    volumes:
+      - ./deploy/ircd.example.toml:/etc/meshircd/ircd.toml:ro
+      - meshircd-state:/var/lib/meshircd
+      # Certificates, if you are terminating TLS in the server itself:
+      # - /etc/letsencrypt:/etc/letsencrypt:ro
+    environment:
+      IRCD_LOG_FORMAT: json
+      # Generate once and keep it: changing this changes every user's
+      # visible host and breaks every cloak-based ban.
+      #   python3 -c "import secrets; print(secrets.token_hex(32))"
+      IRCD_CLOAK_SECRET: "${IRCD_CLOAK_SECRET:?set IRCD_CLOAK_SECRET in .env}"
+    # The server needs no privileges at all beyond binding its own socket.
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: ["/tmp"]
+    ulimits:
+      nofile: { soft: 8192, hard: 8192 }
+
+volumes:
+  meshircd-state:

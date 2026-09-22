@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "meshircd"
+version = "1.0.0"
+description = "A small, self-contained IRC server written with the Python standard library"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "meshircd contributors" }]
+keywords = ["irc", "ircd", "server", "asyncio", "tls"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: AsyncIO",
+    "Intended Audience :: System Administrators",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Communications :: Chat :: Internet Relay Chat",
+]
+# No runtime dependencies, by design. tomllib (3.11+), sqlite3, ssl,
+# asyncio and hashlib are all standard library.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+meshircd = "meshircd.cli:main"
+meshircdctl = "meshircd.cli:ctl"
+
+[project.urls]
+Homepage = "https://github.com/example/meshircd"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = ["error::DeprecationWarning"]

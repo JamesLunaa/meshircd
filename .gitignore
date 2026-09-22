@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Secrets
+.env
+
+# Packaging build output
+build/
+dist/
+
+# TLS material -- never commit a private key or cert
+*.pem
+*.key
+*.crt
+
+# Runtime data: account/channel database (sqlite, see storage.py) and the
+# old single-file JSON store from before persistence moved to sqlite
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+accounts.json
+
+# Real server config -- deploy/ircd.example.toml is the template to commit;
+# an actual ircd.toml next to it would carry the server's real secret/salt
+ircd.toml
+
+/TODO

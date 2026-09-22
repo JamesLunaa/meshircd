@@ -1,0 +1,10 @@
+[Unit]
+Description=Reload meshircd after a certificate renewal
+
+[Service]
+Type=oneshot
+# A short delay so the ACME client has finished writing both files; a
+# reload that reads a half-written certificate is refused and logged, and
+# the old certificate keeps serving.
+ExecStartPre=/bin/sleep 5
+ExecStart=/bin/systemctl reload meshircd.service

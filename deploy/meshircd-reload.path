@@ -1,0 +1,18 @@
+# Reload the TLS certificate automatically when an ACME client renews it,
+# instead of waiting for the next restart.
+#
+#   sudo cp deploy/meshircd-reload.path deploy/meshircd-reload.service \
+#       /etc/systemd/system/
+#   sudo systemctl enable --now meshircd-reload.path
+#
+# Point PathChanged at whatever your ACME client actually writes.
+
+[Unit]
+Description=Watch for a renewed meshircd TLS certificate
+
+[Path]
+PathChanged=/etc/letsencrypt/live/irc.example.org/fullchain.pem
+Unit=meshircd-reload.service
+
+[Install]
+WantedBy=multi-user.target

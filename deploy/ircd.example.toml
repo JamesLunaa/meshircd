@@ -1,0 +1,97 @@
+# meshircd configuration.
+# Every setting shown here is the default unless noted.
+
+[server]
+name        = "irc.example.org"   # must look like a hostname
+network     = "ExampleNet"
+description = "an meshircd instance"
+# motd_file = "/etc/meshircd/motd.txt"
+admin_name     = "unconfigured"
+admin_location = "unconfigured"
+admin_email    = "unconfigured"
+# Require a password to connect at all (meshircdctl server-pass):
+# password_salt = ""
+# password_hash = ""
+
+[storage]
+path = "/var/lib/meshircd/meshircd.db"
+# Peers allowed to send a PROXY header on a proxy_protocol listener.
+trusted_proxies = ["127.0.0.1/32", "::1/128"]
+
+# --- listeners ---------------------------------------------------------
+# Bind by interface name for overlay networks: the address a tailnet or
+# WireGuard peer gets is assigned by the overlay and can change, but the
+# interface name does not.
+
+[[listen]]
+host = "127.0.0.1"
+port = 6667
+
+# [[listen]]
+# host = "interface:tailscale0"    # or "interface:wg0"
+# port = 6667
+
+# [[listen]]
+# host = "::"
+# port = 6697
+# tls  = true
+
+# Behind a TLS terminator or load balancer. Only enable proxy_protocol on
+# a listener the proxy alone can reach: the header lets the sender choose
+# the client's apparent address.
+# [[listen]]
+# host = "127.0.0.1"
+# port = 6668
+# proxy_protocol = true
+
+[tls]
+# cert = "/etc/meshircd/tls/fullchain.pem"
+# key  = "/etc/meshircd/tls/privkey.pem"
+min_version = "TLSv1_2"
+
+# CertFP / SASL EXTERNAL. Off by default: Python's ssl module cannot accept
+# a client certificate it is unable to verify, so switching this on without
+# a matching client_ca would stop anyone holding an unrelated client
+# certificate from connecting at all. Point client_ca at the CA that signs
+# your users' certificates, or at a bundle of the self-signed client
+# certificates you accept.
+# request_client_cert = true
+# client_ca = "/etc/meshircd/tls/client-ca.pem"
+
+[cloak]
+enabled = true
+# Generate once and keep it: changing it changes every user's visible host
+# and silently breaks every cloak-based ban.
+#   python3 -c "import secrets; print(secrets.token_hex(32))"
+secret = ""
+suffix = "ip"
+
+[limits]
+max_connections         = 1024
+max_connections_per_ip  = 8
+max_channels_per_client = 40
+# flood_burst must absorb a client's reconnect: registration plus one JOIN
+# per remembered channel. The server refuses to start if it is too small
+# for max_channels_per_client, because the failure it causes -- ordinary
+# clients disconnected for flooding the moment they reconnect -- is very
+# hard to diagnose from the client side.
+flood_burst             = 120
+flood_refill_per_sec    = 2
+ping_interval           = 120
+ping_timeout            = 30
+registration_timeout    = 30
+
+[logging]
+level  = "INFO"
+format = "text"          # or "json"
+log_raw_lines = false    # debugging only: records who said what
+
+# --- operators ----------------------------------------------------------
+# Generate a block with: meshircdctl oper-hash <name>
+# [[oper]]
+# name = "admin"
+# salt = "..."
+# password_hash = "..."
+# host_mask = "*!*@10.0.0.5"
+# tls_only = true
+
