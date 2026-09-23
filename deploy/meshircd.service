@@ -9,7 +9,7 @@
 
 [Unit]
 Description=meshircd IRC daemon
-Documentation=https://github.com/example/meshircd
+Documentation=https://github.com/JamesLunaa/meshircd
 After=network-online.target
 Wants=network-online.target
 # Uncomment when binding to a tailnet address: the interface must exist
