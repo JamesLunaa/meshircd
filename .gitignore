@@ -33,4 +33,7 @@ accounts.json
 # an actual ircd.toml next to it would carry the server's real secret/salt
 ircd.toml
 
+
+#logs
+run/meshircd.log
 /TODO
