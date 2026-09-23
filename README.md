@@ -144,6 +144,25 @@ PYTHONPATH=src python3 -m meshircd --config ircd.toml
 
 ## Deployment
 
+### Public internet — VPS
+
+For a server anyone with a plain IRC client can reach, with no VPN or
+extra software on their side. Bind to the public interface with TLS:
+
+```toml
+[[listen]]
+host = "0.0.0.0"
+port = 6697
+tls  = true
+```
+
+**→ [deploy/public-vps.md](deploy/public-vps.md)** covers choosing a
+host, DNS, Let's Encrypt via DNS-01 (no port 80 needed), certificate
+permissions under `DynamicUser`, systemd, firewalls at both the OS and
+provider layer, renewal, and hardening a server that's reachable by
+anyone.
+
+
 ### Private mesh — Tailscale or WireGuard
 
 The recommended deployment. Bind to the overlay interface **by name**:
@@ -165,6 +184,7 @@ On Tailscale you also get real Let's Encrypt certificates for your
 Tailscale ACLs, certificate renewal without dropping clients, WireGuard
 setup, firewall rules, systemd ordering, and running mesh-private and
 internet-public listeners side by side.
+
 
 ### systemd
 
